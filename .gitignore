@@ -1,0 +1,23 @@
+# Maven
+target/
+pom.xml.tag
+pom.xml.versionsBackup
+release.properties
+
+# Eclipse
+.metadata
+.project
+.classpath
+.settings/
+*.launch
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+# To ignore build artifacts created by Docker Compose:
+# However, keep Dockerfile and docker-compose.yml!
+
+# Logs
+*.log

@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  # === User Authentication Service ===
+  user-auth:
+    # Points to the adjacent UserAuthService directory relative to the current folder
+    build: 
+      context: ../UserAuthService
+      dockerfile: Dockerfile
+    container_name: user-auth-service
+    ports:
+      - "8081:8081" 
+    networks:
+      - wos-network
+    restart: always
+
+  # === Work Order Service ===
+  work-order:
+    # Points to the adjacent WorkOrderService directory
+    build: 
+      context: ../WorkOrderService
+      dockerfile: Dockerfile
+    container_name: work-order-service
+    ports:
+      - "8080:8080" 
+    networks:
+      - wos-network
+    environment:
+      # CRITICAL: Service-to-service communication
+      - AUTH_SERVICE_URL=http://user-auth:8081
+    depends_on:
+      - user-auth
+    restart: always
+
+networks:
+  wos-network:
+    driver: bridge
