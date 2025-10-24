@@ -25,20 +25,19 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // Disable CSRF for stateless REST API
-            .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**").disable())
-            .headers(headers -> headers
-                    .frameOptions(frameOptions -> frameOptions.disable()))
+        	// Disable CSRF protection for stateless APIs
+        	.csrf(csrf -> csrf.disable())
             
             // Configure authorization rules
             .authorizeHttpRequests(auth -> auth
                 // Allow public access to authentication endpoints
-                .requestMatchers("/api/auth/login").permitAll()
-                .requestMatchers("/api/auth/signup").permitAll()
-                .requestMatchers("/h2-console/**").permitAll()
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/actuator/**").permitAll()
+                .requestMatchers("/health").permitAll()
                 
                 // Require authentication for all other API endpoints
                 .requestMatchers("/api/**").authenticated()
+                
                 
                 // Any other request should be authenticated
                 .anyRequest().authenticated()

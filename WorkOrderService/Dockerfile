@@ -11,7 +11,6 @@ WORKDIR /app
 EXPOSE 8080
 
 # STEP 3: Copy the executable JAR file from the host's 'target/' folder into the container.
-# NOTE: Ensure you run 'mvn clean package' before building the Docker image.
 # Replace 'WorkOrderService-0.0.1-SNAPSHOT.jar' with the actual file name if it differs.
 COPY target/WorkOrderService-0.0.1-SNAPSHOT.jar app.jar
 

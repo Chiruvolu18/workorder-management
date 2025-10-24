@@ -1,37 +1,99 @@
-version: '3.8'
-
 services:
+  # === PostgreSQL Database ===
+  postgres:
+    image: postgres:15
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      # Persistent data storage
+      - postgres-data:/var/lib/postgresql/data
+      # Initialize databases on first run
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - wos-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
   # === User Authentication Service ===
   user-auth:
-    # Points to the adjacent UserAuthService directory relative to the current folder
     build: 
       context: ../UserAuthService
       dockerfile: Dockerfile
     container_name: user-auth-service
     ports:
       - "8081:8081" 
+    volumes:
+      # VOLUME MAPPING: Mount JAR file for development
+      - ../UserAuthService/target/UserAuthService-0.0.1-SNAPSHOT.jar:/app/app.jar:ro
+      
+      # Optional: Mount application.properties for config changes without rebuild
+      - ../UserAuthService/src/main/resources/application.properties:/app/application.properties:ro
+    environment:
+      # PostgreSQL connection for UserAuthService
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/userauth_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      
+      # JWT Configuration
+      - JWT_SECRET=MySecretKeyForJWTTokenGenerationAndValidation12345678901234567890
+      - JWT_EXPIRATION=86400000
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - wos-network
     restart: always
 
   # === Work Order Service ===
   work-order:
-    # Points to the adjacent WorkOrderService directory
     build: 
       context: ../WorkOrderService
       dockerfile: Dockerfile
     container_name: work-order-service
     ports:
       - "8080:8080" 
+    volumes:
+      # VOLUME MAPPING: Mount JAR file for development
+      - ../WorkOrderService/target/WorkOrderService-0.0.1-SNAPSHOT.jar:/app/app.jar:ro
+      
+      # Optional: Mount application.properties
+      - ../WorkOrderService/src/main/resources/application.properties:/app/application.properties:ro
+    environment:
+      # PostgreSQL connection for WorkOrderService
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/workorder_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      
+      # JWT Configuration (must match UserAuthService)
+      - JWT_SECRET=MySecretKeyForJWTTokenGenerationAndValidation12345678901234567890
+      
+      # Service-to-service communication
+      - AUTH_SERVICE_URL=http://user-auth:8081
+    
+    depends_on:
+      user-auth:
+        condition: service_started
+      postgres:
+        condition: service_healthy
     networks:
       - wos-network
-    environment:
-      # CRITICAL: Service-to-service communication
-      - AUTH_SERVICE_URL=http://user-auth:8081
-    depends_on:
-      - user-auth
     restart: always
 
 networks:
   wos-network:
     driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local

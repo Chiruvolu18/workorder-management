@@ -49,10 +49,10 @@
 		</dependency>
 		
 		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
-			<scope>runtime</scope>
-		</dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
 		<!-- Explicit Lombok dependency with version so builds and IDEs use a known compatible release -->
 		<dependency>
 		    <groupId>org.projectlombok</groupId>

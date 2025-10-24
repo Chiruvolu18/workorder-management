@@ -24,11 +24,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints
-                .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers("/error").permitAll()
-                
-                // DELETE requires FIELD_CREW role
-                //.requestMatchers(HttpMethod.DELETE, "/api/workorders/**").hasAuthority("ROLE_FIELD_CREW")
                 
                 // All other API endpoints just require authentication
                 .requestMatchers("/api/**").authenticated()

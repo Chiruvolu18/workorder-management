@@ -5,25 +5,43 @@ import java.time.LocalDate;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.wos.workorder.enums.WorkOrderStatus;
 import com.wos.workorder.model.WorkOrder;
 import com.wos.workorder.repository.WorkOrderRepository;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 @Component
 @Profile("dev")
 public class WorkOrderDataInitializer implements CommandLineRunner {
 
     private final WorkOrderRepository workOrderRepository;
+    
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public WorkOrderDataInitializer(WorkOrderRepository workOrderRepository) {
         this.workOrderRepository = workOrderRepository;
     }
 
     @Override
+    @Transactional
     public void run(String... args) throws Exception {
         // Clear existing data (optional - remove if you want to keep data between restarts)
         workOrderRepository.deleteAll();
+        
+        // Get the name of the sequence used by PostgreSQL for the 'work_orders' table.
+        // It's typically 'table_name_id_seq'.
+        String sequenceName = "work_orders_id_seq";
+        
+        // Use TRUNCATE to clear data and safely reset the sequence to 1.
+        // TRUNCATE is faster than deleteAll() and resets the sequence automatically in PostgreSQL (WITH RESTART IDENTITY).
+        entityManager.createNativeQuery("TRUNCATE TABLE work_orders RESTART IDENTITY CASCADE").executeUpdate();
+        
+        System.out.println("Work Orders table truncated and sequence reset.");
 
         // Create mock work orders
         WorkOrder wo1 = new WorkOrder();
@@ -71,16 +89,17 @@ public class WorkOrderDataInitializer implements CommandLineRunner {
         System.out.println("================================================");
         System.out.println("Mock Work Orders Created Successfully!");
         System.out.println("Total Work Orders: " + workOrderRepository.count());
+        System.out.println("Next expected ID: " + (workOrderRepository.count() + 1));
         System.out.println("================================================");
         
         // Display created work orders
-        workOrderRepository.findAll().forEach(wo -> 
-            System.out.println("ID: " + wo.getId() + 
-                             " | Customer: " + wo.getCustomerName() + 
-                             " | Asset: " + wo.getAssetId() + 
-                             " | Status: " + wo.getStatus())
-        );
-        System.out.println("================================================");
+//        workOrderRepository.findAll().forEach(wo -> 
+//            System.out.println("ID: " + wo.getId() + 
+//                             " | Customer: " + wo.getCustomerName() + 
+//                             " | Asset: " + wo.getAssetId() + 
+//                             " | Status: " + wo.getStatus())
+//        );
+//        System.out.println("================================================");
     }
 }
 
